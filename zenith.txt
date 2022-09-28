@@ -1,0 +1,233 @@
+    CREATE COMPUTE MODULE GetMaturingFloatItems_Compute
+		CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+
+		
+		DECLARE pnCustomerId CHARACTER;
+		DECLARE psQryType, psAcctNo,psLogonId,psIpAddr,ResponseCode,ResponseDesc CHARACTER;
+		DECLARE pnCustId INTEGER;
+		DECLARE pdtEndDt,pdtStartDt CHARACTER;
+		
+		
+        Set psQryType = 'getdeposits';
+        Set psAcctNo = InputRoot.JSON.Data.accountnumber;
+        Set pnCustId = Cast(InputRoot.JSON.Data.customerid AS INTEGER);
+        Set pdtStartDt = InputRoot.JSON.Data.frommaturitydate;
+        Set pdtEndDt = InputRoot.JSON.Data.tomaturitydate;
+        SET psLogonId = InputRoot.HTTPInputHeader.Logonid;
+		SET psIpAddr = InputRoot.HTTPInputHeader."X-Remote-Addr";
+
+       	
+
+
+      Call getMaturingFloatItem_SP(psQryType, psAcctNo, pnCustId, pdtStartDt,pdtEndDt,psLogonId,psIpAddr, ResponseCode, ResponseDesc,Environment.MaturingItems.Resp[]);
+			
+			
+			CREATE LASTCHILD OF OutputRoot DOMAIN 'JSON';
+			CREATE FIELD OutputRoot.JSON.Data.Response IDENTITY(JSON.Array)Response;
+
+			SET OutputRoot.JSON.Data.Response.Item[] = Environment.MaturingItems.Resp[];
+			SET OutputRoot.JSON.Data.ResponseDescription = 'Success';
+		
+		RETURN TRUE;
+		
+   END;
+	
+CREATE PROCEDURE getMaturingFloatItem_SP (
+		IN psQryType CHAR,
+		IN psAcctNo CHAR,
+		IN pnCustId int,
+		IN pdtStartDt CHAR,
+		IN pdtEndDt CHAR,
+		IN psLogonId CHAR,
+		IN psIpAddr CHAR,
+		INOUT rsResponseCode CHAR,
+		INOUT rsResponseDesc CHAR)
+	
+	LANGUAGE DATABASE
+	DYNAMIC RESULT SETS 1 EXTERNAL NAME "dbo.zsp_xpath_qry_getpostings_2";
+END MODULE;
+---------------------------------------------------------------------------------------------------------------------------------------
+CREATE COMPUTE MODULE InsertClientDetails_Compute
+		CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+
+		
+		DECLARE psField1,psField2,psField3,psField4,psField5,psField6,psField7,psField8,psField9,psField10 CHARACTER;
+		DECLARE psQryType, psAcctNo,psLogonId,psIpAddr,ResponseCode,ResponseDesc CHARACTER;
+		DECLARE pnCustId INTEGER;
+		DECLARE pdtEndDt,pdtStartDt TIMESTAMP;
+		
+        Set psAcctNo = InputRoot.JSON.Data.accountnumber;
+        Set pnCustId = Cast(InputRoot.JSON.Data.customerid AS INTEGER);
+        Set psField1 = InputRoot.JSON.Data.field1;
+        Set psField2 = InputRoot.JSON.Data.field2;
+        Set psField3 = InputRoot.JSON.Data.field3;
+        Set psField4 = InputRoot.JSON.Data.field4;
+        Set psField5 = InputRoot.JSON.Data.field5;
+        Set psField6 = InputRoot.JSON.Data.field6;
+        Set psField7 = InputRoot.JSON.Data.field7;
+        Set psField8 = InputRoot.JSON.Data.field8;
+        Set psField9 = InputRoot.JSON.Data.field9;
+        Set psField10 = InputRoot.JSON.Data.field10;
+        SET psLogonId = InputRoot.HTTPInputHeader.Logonid;
+		SET psIpAddr = InputRoot.HTTPInputHeader."X-Remote-Addr";
+		
+
+		
+
+
+		
+		DECLARE Response INTEGER insertClientDetails_SP(pnCustId, psLogonId, psIpAddr, psField1, psField2, psField3, psField4, psField5, psField6,
+		 psField7, psField8, psField9, psField10, ResponseCode, ResponseDesc);
+		
+		IF Response = 0 THEN
+			
+			CREATE LASTCHILD OF OutputRoot DOMAIN 'JSON';
+			SET OutputRoot.JSON.Data.ResponseCode = 0;
+			SET OutputRoot.JSON.Data.ResponseDescription = 'Success';
+		ELSE
+			CREATE LASTCHILD OF OutputRoot DOMAIN 'JSON';
+			SET OutputRoot.JSON.Data.ResponseCode = ResponseCode;
+			SET OutputRoot.JSON.Data.ResponseDescription = ResponseDesc;
+			SET OutputRoot.JSON.Data.ErrorMessage = 'Failed stored procedure call';
+		END IF;
+		
+		RETURN TRUE;
+		
+   END;
+	
+CREATE PROCEDURE insertClientDetails_SP (		
+		IN pnCustId int,	
+		IN psLogonId CHAR,
+		IN psIpAddr CHAR,
+		IN psField1 CHAR,
+		IN psField2 CHAR,
+		IN psField3 CHAR,
+		IN psField4 CHAR,
+		IN psField5 CHAR,
+		IN psField6 CHAR,
+		IN psField7 CHAR,
+		IN psField8 CHAR,
+		IN psField9 CHAR,
+		IN psField10 CHAR,
+		INOUT rsResponseCode CHAR,
+		INOUT rsResponseDesc CHAR)
+	
+	RETURNS INT
+	LANGUAGE DATABASE
+	EXTERNAL NAME "dbo.zsp_xpath_cust_client_setup_2";
+END MODULE;
+--------------------------------------------------------------------------------------------------------------------------------
+CREATE COMPUTE MODULE GetStatementByValdt_Compute
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE ResponseCode, ResponseDesc CHARACTER '';
+		DECLARE psIpAddr CHARACTER;	
+		DECLARE psAcctNo  CHARACTER;
+		DECLARE pnCustId  INTEGER;
+		DECLARE pdtStartDt CHARACTER;
+		DECLARE pdtEndDt CHARACTER;
+    	DECLARE psQryType  CHARACTER;--'getNewDeposits';
+		DECLARE psLogonId  CHARACTER;     
+		DECLARE rsErrorText  CHARACTER '';   
+	
+        SET psIpAddr = InputRoot.HTTPInputHeader."X-Remote-Addr";
+        SET psLogonId=InputRoot.HTTPInputHeader.LogonId;--'apmterminal'
+		SET psAcctNo =InputRoot.JSON.Data.accountnumber;
+		SET psQryType='getNewDeposits';
+
+		SET pnCustId = Cast(InputRoot.JSON.Data.customerid AS INTEGER);	
+		SET pdtStartDt =InputRoot.JSON.Data.fromtransactiondate;
+
+		SET pdtEndDt =InputRoot.JSON.Data.totransactiondate;
+	   
+	   
+	   
+	    DECLARE Response INTEGER getStatementByValdt_SP(psQryType,psAcctNo,pnCustId,pdtStartDt,pdtEndDt,psLogonId,psIpAddr,ResponseCode, ResponseDesc);
+        IF Response = 0 THEN		
+			CREATE LASTCHILD OF OutputRoot DOMAIN 'JSON';
+			SET OutputRoot.JSON.Data.ResponseCode = 0;
+			SET OutputRoot.JSON.Data.ResponseDescription = 'Success';
+
+		ELSE
+			CREATE LASTCHILD OF OutputRoot DOMAIN 'JSON';
+			SET OutputRoot.JSON.Data.ResponseCode = ResponseCode;
+			SET OutputRoot.JSON.Data.ResponseDescription = ResponseDesc;
+			SET OutputRoot.JSON.Data.ErrorMessage = 'Failed stored procedure call';
+		END IF;
+		   
+		RETURN TRUE;
+	END;
+	-- @psQryType='getNewDeposits',@psAcctNo='1011123450',@pnCustId=93,@pdtStartDt='20220922',@pdtEndDt='20220923'
+	--,@psLogonId='apmterminal',@psIpAddr=null, @rsResponseCode='', @rsResponseDesc=''
+    CREATE PROCEDURE getStatementByValdt_SP(
+	    IN psQryType CHAR,
+	    IN psAcctNo CHAR,
+		IN pnCustId INT,
+		IN pdtStartDt CHAR,
+		IN pdtEndDt CHAR,
+		IN psLogonId CHAR,
+		IN psIpAddr CHAR,
+		INOUT rsResponseCode CHAR,
+		INOUT rsResponseDesc CHAR)
+	RETURNS INT
+	LANGUAGE DATABASE
+	EXTERNAL NAME "dbo.zsp_xpath_qry_getpostings_2";
+END MODULE;
+--------------------------------------------------------------------------------------------------------------------------------
+
+
+CREATE COMPUTE MODULE GetStatementByTransdt_Compute
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE ResponseCode, ResponseDesc CHARACTER '';
+		DECLARE psIpAddr CHARACTER;	
+		DECLARE psAcctNo  CHARACTER;
+		DECLARE pnCustId  INTEGER;
+		DECLARE pdtStartDt CHARACTER;
+		DECLARE pdtEndDt CHARACTER;
+    	DECLARE psQryType  CHARACTER;
+		DECLARE psLogonId  CHARACTER;
+	
+        SET psIpAddr = InputRoot.HTTPInputHeader."X-Remote-Addr";
+        SET psLogonId=InputRoot.HTTPInputHeader.LogonId;--'apmterminal'
+		SET psAcctNo =InputRoot.JSON.Data.accountnumber;
+        SET psQryType='getNewDeposits';
+		SET pnCustId = Cast(InputRoot.JSON.Data.customerid AS INTEGER);	
+		SET pdtStartDt =InputRoot.JSON.Data.fromtransactiondate;
+
+		SET pdtEndDt =InputRoot.JSON.Data.totransactiondate;
+	   
+	   
+	   
+	    DECLARE Response INTEGER getStatementByTransdt_SP(psQryType,psAcctNo,pnCustId,pdtStartDt,pdtEndDt,psLogonId,psIpAddr,ResponseCode, ResponseDesc);
+        IF Response = 0 THEN		
+			CREATE LASTCHILD OF OutputRoot DOMAIN 'JSON';
+			SET OutputRoot.JSON.Data.ResponseCode = 0;
+			SET OutputRoot.JSON.Data.ResponseDescription = 'Success';
+
+		ELSE
+			CREATE LASTCHILD OF OutputRoot DOMAIN 'JSON';
+			SET OutputRoot.JSON.Data.ResponseCode = ResponseCode;
+			SET OutputRoot.JSON.Data.ResponseDescription = ResponseDesc;
+			SET OutputRoot.JSON.Data.ErrorMessage = 'Failed stored procedure call';
+		END IF;
+		   
+		RETURN TRUE;
+	END;
+	CREATE PROCEDURE getStatementByTransdt_SP (
+	    IN psQryType CHAR,
+	    IN psAcctNo CHAR,
+		IN pnCustId INT,
+		IN pdtStartDt CHAR,
+		IN pdtEndDt CHAR,
+		IN psLogonId CHAR,
+		IN psIpAddr CHAR,
+		INOUT rsResponseCode CHAR,
+		INOUT rsResponseDesc CHAR)
+	RETURNS INT
+	LANGUAGE DATABASE
+	EXTERNAL NAME "dbo.zsp_xpath_qry_getpostings_2";
+END MODULE;
+-------------------------------------------------------------------------------------------------------------------------------------
